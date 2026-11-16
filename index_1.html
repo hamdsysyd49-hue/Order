@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تسجيل الطلبات</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mu:#6b7280;--ac:#0f766e;--bd:#e5e7eb;--dn:#15803d;--wt:#b45309;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1b2026;--tx:#eef0f3;--mu:#9aa3af;--ac:#2dd4bf;--bd:#2a313a;--dn:#4ade80;--wt:#fbbf24}}
+:root[data-theme="dark"]{--bg:#111418;--card:#1b2026;--tx:#eef0f3;--mu:#9aa3af;--ac:#2dd4bf;--bd:#2a313a;--dn:#4ade80;--wt:#fbbf24}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding:16px;max-width:520px;margin-inline:auto}
+h1{font-size:20px;margin:4px 0 14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+input,select{width:100%;padding:12px;margin-bottom:8px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+.row{display:flex;gap:8px}
+button{font:inherit;border:0;border-radius:10px;padding:12px;cursor:pointer}
+.main{width:100%;background:var(--ac);color:#fff;font-weight:600}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1;background:var(--card);color:var(--tx);border:1px solid var(--bd);padding:8px;font-size:14px}
+.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.o{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.o b{display:block}.o small{color:var(--mu)}
+.st{font-size:12px;padding:6px 10px;background:none;border:1px solid currentColor}
+.new{color:var(--wt)}.done{color:var(--dn)}
+.del{background:none;color:var(--mu);padding:6px}
+.tot{text-align:center;color:var(--mu);font-size:14px;margin:8px 0}
+</style>
+</head>
+<body>
+<h1>📋 تسجيل الطلبات</h1>
+<div class="card">
+<input id="n" placeholder="اسم العميل">
+<input id="i" placeholder="الطلب (مثال: 2 قميص)">
+<div class="row"><input id="p" type="number" inputmode="decimal" placeholder="السعر"><input id="q" type="number" inputmode="numeric" placeholder="الكمية" value="1"></div>
+<button class="main" onclick="add()">+ إضافة طلب</button>
+</div>
+<div class="tabs">
+<button id="t0" class="on" onclick="tab(0)">الكل</button>
+<button id="t1" onclick="tab(1)">جديد</button>
+<button id="t2" onclick="tab(2)">تم التسليم</button>
+</div>
+<div id="list"></div>
+<div class="tot" id="tot"></div>
+<script>
+var orders=[],f=0;
+try{orders=JSON.parse(localStorage.getItem("orders")||"[]")}catch(e){orders=[]}
+function save(){try{localStorage.setItem("orders",JSON.stringify(orders))}catch(e){}}
+function add(){
+var n=document.getElementById("n").value.trim(),i=document.getElementById("i").value.trim();
+var p=parseFloat(document.getElementById("p").value)||0,q=parseInt(document.getElementById("q").value)||1;
+if(!n||!i){alert("اكتب اسم العميل والطلب");return}
+orders.unshift({id:Date.now(),n:n,i:i,p:p,q:q,d:false,t:new Date().toLocaleString("ar-EG")});
+["n","i","p"].forEach(function(x){document.getElementById(x).value=""});
+document.getElementById("q").value=1;save();draw()}
+function tog(id){orders.forEach(function(o){if(o.id===id)o.d=!o.d});save();draw()}
+function del(id){orders=orders.filter(function(o){return o.id!==id});save();draw()}
+function tab(x){f=x;[0,1,2].forEach(function(k){document.getElementById("t"+k).className=k===x?"on":""});draw()}
+function esc(s){return s.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function draw(){
+var l=orders.filter(function(o){return f===0||(f===1?!o.d:o.d)});
+var sum=0;
+document.getElementById("list").innerHTML=l.length?l.map(function(o){
+sum+=o.p*o.q;
+return '<div class="card o"><div><b>'+esc(o.n)+'</b>'+esc(o.i)+' × '+o.q+'<br><small>'+o.t+' · '+(o.p*o.q)+' ج</small></div><div><button class="st '+(o.d?'done':'new')+'" onclick="tog('+o.id+')">'+(o.d?'✓ تم':'جديد')+'</button><button class="del" onclick="del('+o.id+')">🗑</button></div></div>'
+}).join(""):'<div class="tot">لا توجد طلبات</div>';
+document.getElementById("tot").textContent=l.length?("عدد الطلبات: "+l.length+" · الإجمالي: "+sum+" ج"):""}
+draw();
+</script>
+</body>
+</html>
